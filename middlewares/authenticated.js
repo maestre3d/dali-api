@@ -17,6 +17,7 @@ exports.ensureAuth = function(req, res, next) {
         if(payload.exp <= moment().unix()) {
             return res.status(401).send({message: "Session expired."});
         }
+        req.user = payload;
     } catch(ex){
         if(ex.message === 'Token expired'){
             return res.status(404).send({message:"Session expired."});
@@ -24,8 +25,6 @@ exports.ensureAuth = function(req, res, next) {
             return res.status(404).send({message:"Invalid token."});
         }
     }
-
-    req.user = payload;
     next();
 
 }

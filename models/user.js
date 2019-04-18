@@ -1,14 +1,14 @@
 'use strict'
 const mongoose  = require('mongoose');
-let Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
 let UserSchema = Schema({
-    username: String,
-    name: String,
-    surname: String,
-    password: String,
-    image: String,
-    role: String
+    username:       {type: String, required: true },
+    name:           String,
+    surname:        String,
+    password:       String,
+    image:          { type: String, default: null },
+    role:           {type: String, default: 'ROLE_USER'}
 });
 
 module.exports = mongoose.model('User', UserSchema);

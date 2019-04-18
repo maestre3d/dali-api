@@ -9,6 +9,8 @@ let md_upload = multiParty({uploadDir: './uploads/users/'});
 
 api.post('/user', controller.newUser);
 api.post('/login', controller.login);
+api.get('/user', controller.getUsers);
+api.get('/test', controller.testPromise);
 
 module.exports = api;
 
