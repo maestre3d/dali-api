@@ -7,7 +7,7 @@ const secret = 'secret_pass';
 
 exports.ensureAuth = function(req, res, next) {
     if(!req.headers.authorization) {
-        return res.status(403).send({message: "You must log in."});
+        return res.status(403).send({message: "Authentication required."});
     }
 
     let token = req.headers.authorization.replace(/['"]+/g, '');

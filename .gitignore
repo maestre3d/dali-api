@@ -4,3 +4,5 @@ log/*
 npm-debug.log
 .DS_Store
 /*.env
+uploads/users/*
+uploads/items/*

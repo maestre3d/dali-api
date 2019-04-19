@@ -9,6 +9,9 @@
   },
   "author": "Alonso R",
   "license": "MIT",
+  "engines": {
+    "node":"11.x"
+  },
   "dependencies": {
     "bcrypt": "^3.0.5",
     "body-parser": "^1.18.3",
