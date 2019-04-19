@@ -18,7 +18,7 @@ api.post('/user/services/files/:id', [md_auth.ensureAuth, md_upload], controller
 api.get('/user/services/files/:imageFile', controller.getImageFile);
 
 // Queries / Misc
-api.post('/login', controller.login);
+api.post('/login', controller.logIn);
 api.get('/user', md_auth.ensureAuth, controller.getUsers);
 api.get('/user/:username', md_auth.ensureAuth, controller.getUser);
 

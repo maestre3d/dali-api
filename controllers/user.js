@@ -24,59 +24,58 @@ function newUser(req, res){
     });
 
     User.find({username: params.username}).exec()
-    .then(x => {
-        if(x.length >= 1) throw {code : 404, message : "User already exists."};
+        .then(x => {
+            if(x.length >= 1) throw {code : 400, message : "User already exists."};
 
-        return bcrypt.hash(params.password, saltRounds);
-    }, (err) => {
-        throw {code : 500, message : err};
-    })
-    .then(hash => {
-        user.password = hash;
-        return user.save();
-    })
-    .then(userSaved => {
-        if( !userSaved ) throw {code : 400, message : "Couldn't create user."};
+            return bcrypt.hash(params.password, saltRounds);
+        }, (err) => {
+            throw {code : 400, message : err};
+        })
+        .then(hash => {
+            user.password = hash;
+            return user.save();
+        })
+        .then(userSaved => {
+            if( !userSaved ) throw {code : 400, message : "Couldn't create user."};
 
-        res.status(200).send({user: userSaved});
-    })
-    .catch(err => {res.status(err.code).send({message:err.message})});
+            res.status(200).send({user: userSaved});
+        })
+        .catch(err => {res.status(err.code).send({message:err.message})});
 }
 
 
-function login(req, res){
+function logIn(req, res){
     let params = req.body;
     
     if(!params.username && !params.password) return res.status(404).send({message:"Fill all the fields."});
 
     let user;
     User.findOne({username: params.username}).exec()
-    .then(found => {
-        if(!found) throw {code: 404, message: "Incorrect User/Password."}
+        .then(found => {
+            if(!found) throw {code: 404, message: "Incorrect User/Password."}
 
-        user = found;
-        return bcrypt.compare(params.password, found.password);
-    }, err => { throw {code : 500, message : err} })
-    .then(result => {
-        if(!result) throw {code: 404, message: "Incorrect User/Password."};
+            user = found;
+            return bcrypt.compare(params.password, found.password);
+        }, err => { throw {code : 400, message : err} })
+        .then(result => {
+            if(!result) throw {code: 404, message: "Incorrect User/Password."};
 
-        if( params.getToken === 'true' ) res.status(200).send({token: jwt.createToken(user)});
-        else res.status(200).send({user: user});
-    })
-    .catch(err => res.status(err.code).send({message: err.message}));
+            if( params.getToken === 'true' ) res.status(200).send({token: jwt.createToken(user)});
+            else res.status(200).send({user: user});
+        })
+        .catch(err => res.status(err.code).send({message: err.message}));
 }
 
 function getUsers(req, res){
-    let find = User.find().limit(50).exec();
-
     if(req.user.role !== 'ROLE_ADMIN') return res.status(403).send({message:"You don't have permission."});
 
-    find.then((users) => {
-        if(!users) throw {code : 404, message : "Couldn't find any users."};
+    User.find().limit(50).exec()
+        .then((users) => {
+            if(!users) throw {code : 404, message : "Couldn't find any users."};
 
-        res.status(200).send({users: users});
-    }, err => { throw {code: 400, message: "Something happened..."} })
-    .catch((err) => res.status(err.code).send({message:err.message}));
+            res.status(200).send({users: users});
+        }, err => { throw {code: 400, message: "Something happened..."} })
+        .catch((err) => res.status(err.code).send({message:err.message}));
 }
 
 function getUser(req, res) {
@@ -120,19 +119,19 @@ function deleteUser(req, res) {
     if(req.user.role !== 'ROLE_ADMIN') return res.status(403).send({message:"You don't have permission."});
 
     User.findById(userID).exec()
-    .then(found => {
-        if(!found) throw {code: 404, message: "User not found."};
+        .then(found => {
+            if(!found) throw {code: 404, message: "User not found."};
 
-        // Validate admin's session
-        if(found.role === 'ROLE_ADMIN') if(found.id !== req.user.sub) throw {code: 403, message:"Cannot update user."};
+            // Validate admin's session
+            if(found.role === 'ROLE_ADMIN') if(found.id !== req.user.sub) throw {code: 403, message:"Cannot update user."};
 
-        return User.findByIdAndRemove(userID).exec();
-    }, err => { throw {code:400, message:"User not found."} })
-    .then(user => {
-        if(!user) throw {code: 404, message: "Cannot delete user."};
-        res.status(200).send({user: user});
-    }, err => { throw {code: 400, message:"Something happened..."} })
-    .catch(err => res.status(err.code).send({message:err.message}));
+            return User.findByIdAndRemove(userID).exec();
+        }, err => { throw {code:400, message:"User not found."} })
+        .then(user => {
+            if(!user) throw {code: 404, message: "Cannot delete user."};
+            res.status(200).send({user: user});
+        }, err => { throw {code: 400, message:"Something happened..."} })
+        .catch(err => res.status(err.code).send({message:err.message}));
         
 }
 
@@ -176,7 +175,6 @@ function uploadFile(req, res) {
 async function getImageFile(req, res){
     let image_file = req.params.imageFile;
     let path_file = './uploads/users/' + image_file;
-
     let response = await fs.existsSync(path_file);
 
     (response.err) ? res.status(404).send({message:"File not found."}) : res.sendFile(path.resolve(path_file));
@@ -185,7 +183,7 @@ async function getImageFile(req, res){
 
 module.exports = {
     newUser,
-    login,
+    logIn,
     getUsers,
     getUser,
     updateUser,
