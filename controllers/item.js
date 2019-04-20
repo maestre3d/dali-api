@@ -1,122 +1,83 @@
 'use strict'
-// Model(s)
 const Item = require('../models/item');
 
-// Misc
-const API_MSG = 'Server Error';
-
-function createItem(req, res) {
+async function createItem(req, res) {
     let params = req.body;
-    let item = new Item();
+    
+    if(req.user.role !== 'ROLE_ADMIN') return res.status(403).send({message:"Access denegated."});
+    if( !params.name && !params.type && !params.brand && !params.stock ) return res.status(400).send({message:"Fill all the required fields."});
 
-    if(req.user.role !== 'ROLE_ADMIN'){
-        res.status(403).send({message:"Access denegated."});
-    }
+    let item = new Item({
+        name: params.name,
+        brand: params.brand,
+        stock: params.stock,
+        type: params.type
+    });
 
-    if ( params.name && params.type && params.brand && params.stock ) {
-        item.name = params.name;
-        item.brand = params.brand;
-        item.stock = params.stock;
-        item.type = params.type;
+    const exists = await Item.findOne({name: item.name}).exec()
+                            .then(item => item ? true:false, err => { throw {code:400, message: "Something happened..."} })
+                            .catch(err => res.status(err.code).send({message:err.message}));
+    
+    if(exists === true) return res.status(400).send({message:"Item already exists."});
 
-        let find = Item.findOne({name: params.name}).exec();
+    const itemSaved = await item.save();
 
-        find
-        .then((found) => {
-            if(found){
-                res.status(404).send({message:"Product already exists."});
-            }else{
-                return item.save();
-            }
-        })
-        .then((itemSaved) => {
-            if(!itemSaved){
-                res.status(404).send({message:"Cannot create product."});
-            }else{
-                res.status(200).send({item: itemSaved});
-            }
-        })
-        .catch((err) => res.status(500).send({message:API_MSG}));
-
-    }else{
-        res.status(404).send({message:"Fill all the fields."});
-    }
+    (!itemSaved) ? res.status(404).send({message:"Cannot create item."}) : res.status(200).send({item: itemSaved});
 }
 
-function editItem(req, res) {
-    const itemId = req.params.id;
+async function editItem(req, res) {
+    const itemID = req.params.id;
+    const item = req.body;
 
-    if(req.user.role !== 'ROLE_ADMIN'){
-        console.log(req.user);
-        
-        res.status(403).send({message:"Access denegated."});
-    }
+    if(req.user.role !== 'ROLE_ADMIN') return res.status(403).send({message:"Access denegated."});
 
-    let findItem = new Promise((resolve, reject)=>{
-        Item.findById(itemId, (err, found)=>{
-            if(err){
-                reject(err);
-            }else{
-                resolve(found);
-            }
-        });     
-    });
+    const find = await Item.findOne({name: item.name}).exec()
+                            .then(found => found ? true:false, err => { throw {code:400, message: "Something happened..."} })
+                            .catch(err => res.status(err.code).send({message:err.message}));
+    
+    if(find) return res.status(400).send({message:"Item already exists."});
 
-    let checkRepeat = new Promise((resolve, reject) => {
-        let item = req.body;
-        Item.findOne({name: item.name}, (err, exists) => {
-            if(err){
-                reject(err);
-            }else{
-                if(exists){
-                    res.status(404).send({message:"Product already exists."});
-                }else{
-                    resolve(exists);
-                }
-            }
-        });
-    });
-
-    findItem.catch((err) => res.status(500).send({message:API_MSG}));
-    findItem.then((found) => {
-        checkRepeat.catch((err) => res.status(500).send({message:API_MSG}));
-        checkRepeat.then((exists) => {
-            if(!exists){
-                let updateItem = new Promise((resolve, reject) => {
-                    Item.findByIdAndUpdate(found._id, (err, itemUpd) => {
-                        if(err){
-                            reject(err);
-                        }else{
-                            if(!itemUpd){
-                                res.status(404).send({message:"Cannot update product."});
-                            }else{
-                                resolve(itemUpd);
-                            }
-                        }
-                    });
-                });
-
-                updateItem.catch((err) => res.status(500).send({message:API_MSG}));
-                updateItem.then((itemUpd) => res.status(200).send({item: itemUpd}));
-            }
-        });
-    });
+    const update = await Item.findByIdAndUpdate(itemID, item).exec()
+                            .then(itemUpd => itemUpd, err => { throw {code: 400, message:"Item not found."} })
+                            .catch(err => res.status(err.code).send({message:err.message}));
+    
+    ( !update ) ? res.status(404).send({message:"Item not found."}) : res.status(200).send({item: update});
 }
 
-function getAll(req, res){
-    Item.find().exec()
-    .then((items) => {
-        if(!items){
-            res.status(404).send({message:"Couldn't find any products."});
-        }else{
-            res.status(200).send({items: items})
-        }
-    })
-    .catch((err) => res.status(500).send({message:API_MSG}))
+async function deleteItem(req, res) {
+    const itemID = req.params.id;
+
+    if (req.user.role !== 'ROLE_ADMIN') return res.status(403).send({message:"Access denegated."});
+
+    const deleted = await Item.findByIdAndRemove(itemID).exec()
+                                .then(deleted => deleted, err => { throw {code: 400, message: "Something happened..."} })
+                                .catch(err => res.status(err.code).send({message:err.message}));
+
+    (!deleted) ? res.status(404).send({message:"Item not found."}) : res.status(200).send({item: deleted});
+}
+
+async function getItems(req, res){
+    let items =  await Item.find().exec()
+                            .then( items => (items) ? items: null, err => { throw {code:400, message:"Items not found."} })
+                            .catch(err => res.status(err.code).send({message:err.message}));
+
+    ( !items ) ? res.status(404).send({message:"Items not found."}) : res.status(200).send({items:items});
+}
+
+async function getItem(req, res) {
+    const itemID = req.params.id;
+
+    const item = await Item.findById(itemID).exec()
+                            .then(item => item, err => { throw {code:400, message:"Something happened..."} })
+                            .catch(err => res.status(err.code).send({message:err.message}));
+
+    (!item) ? res.status(404).send({message:"Item not found."}):res.status(200).send({item:item});
 }
 
 module.exports = {
     createItem,
     editItem,
-    getAll
+    deleteItem,
+    getItems,
+    getItem
 }
