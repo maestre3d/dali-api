@@ -10,8 +10,9 @@ const cors = require('cors');
 const API_MD = "/api";
 
 // Routes
-let userRoutes = require('./routes/user');
-let itemRoutes = require('./routes/item');
+const userRoutes = require('./routes/user');
+const itemRoutes = require('./routes/item');
+const serviceRoutes = require('./routes/service');
 
 let app = express();
 
@@ -46,5 +47,6 @@ app.options('*', cors());
 // Use routes
 app.use(API_MD, userRoutes);
 app.use(API_MD, itemRoutes);
+app.use(API_MD, serviceRoutes);
 
 module.exports = app;
