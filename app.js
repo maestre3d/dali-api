@@ -13,6 +13,7 @@ const API_MD = "/api";
 const userRoutes = require('./routes/user');
 const itemRoutes = require('./routes/item');
 const serviceRoutes = require('./routes/service');
+const appointRoutes = require('./routes/appoint');
 
 let app = express();
 
@@ -48,5 +49,6 @@ app.options('*', cors());
 app.use(API_MD, userRoutes);
 app.use(API_MD, itemRoutes);
 app.use(API_MD, serviceRoutes);
+app.use(API_MD, appointRoutes);
 
 module.exports = app;

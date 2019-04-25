@@ -3,6 +3,13 @@ const bcrypt = require('bcrypt');
 const jwt = require('../services/jwt');
 const fs = require('fs');
 const path = require('path');
+const AWS = require('aws-sdk');
+const s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: 'us-west-2'
+});
+const bucket = 'dali-api';
 
 const User = require('../models/user');
 const API_MSG = "Server Error";
@@ -158,6 +165,7 @@ function uploadFile(req, res) {
                 throw {code: 404, message: "User not found." };
             }
 
+            // Deletes user's older image
             if(user.image) {
                 let path_img = `${path.dirname(file_path)}\\${user.image}`;
                 if(fs.existsSync(path_img)) fs.unlinkSync(path_img);
@@ -181,6 +189,63 @@ async function getImageFile(req, res){
 
 }
 
+async function uploadS3(req, res) {
+    let userID = req.params.id;
+
+    if(!req.files) return res.status(400).send({message:"File not detected."});
+
+    let file_path = req.files.image.path;
+    let ext_split = path.basename(file_path).split('\.');
+
+    let file_name =  `${ext_split[0]}.${ext_split[1]}`;
+    let file_ext = ext_split[1];
+
+    if(file_ext !== 'jpg' && file_ext !== 'jpeg' && file_ext !== 'png' ){
+        fs.unlinkSync(file_path);
+        return res.status(400).send({message:"File not supported."});
+    }
+
+    try {
+        let fileData = fs.readFileSync(file_path);
+
+        const params = {
+            Bucket: `${bucket}/users`,
+            Key: file_name,
+            Body: fileData,
+            ACL: 'public-read',
+            ContentType: 'image/jpeg'
+        };
+
+        let uploadedFile = await s3.upload(params).promise().then(data => data, err => { throw err });
+        if(!uploadedFile) return res.status(400).send({message:"S3 Upload failed."});
+
+        let updated = await User.findByIdAndUpdate(userID, {image: uploadedFile.Location});
+
+        if(!updated) {
+            fs.unlinkSync(file_path);
+            return res.status(404).send({message:"User not found."});
+        }else{
+            // Removes user's pic from S3 Bucket
+            if(updated.image) {
+                let aws_path = path.basename(updated.image);
+                let pms = {
+                    Bucket: `${bucket}/users`,
+                    Key: aws_path
+                };
+                s3.deleteObject(pms, (err, data) =>{
+                    if (err) console.log(err, err.stack); // an error occurred
+                });
+            }
+            // Removes locally
+            if(fs.existsSync(file_path)) fs.unlinkSync(file_path);
+            res.status(200).send({user: updated});
+        }
+    } catch (err) {
+        fs.unlinkSync(file_path);
+        return res.status(400).send({message:err.message});
+    }
+}
+
 module.exports = {
     newUser,
     logIn,
@@ -189,7 +254,8 @@ module.exports = {
     updateUser,
     deleteUser,
     uploadFile,
-    getImageFile
+    getImageFile,
+    uploadS3
 };
 
 // ---> TESTING
