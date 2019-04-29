@@ -4,9 +4,10 @@ const Schema = mongoose.Schema;
 
 const AppointSchema = new Schema({
     costumer: { type: String },
-    employee: { type: Schema.ObjectId, ref:'User', required: true },
+    user: { type: Schema.ObjectId, ref:'User', required: true },
     services: [{type: Schema.ObjectId, ref: 'Service'}],
-    time: {type: Date, default: Date.now()}
+    time: {type: Number},
+    status: Boolean
 });
 
 module.exports = mongoose.model('Appoint', AppointSchema);

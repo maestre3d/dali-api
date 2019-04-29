@@ -15,7 +15,7 @@ api.delete('/user/:id', md_auth.ensureAuth, controller.deleteUser);
 
 // Uploaders to Bucket
 api.post('/user/services/files/:id', [md_auth.ensureAuth, md_upload], controller.uploadFile);
-api.get('/user/services/files/:imageFile', controller.getImageFile);
+api.get('/user/files/:imageFile', controller.getImageFile);
 // AWS
 api.post('/user/aws/s3/:id', [md_auth.ensureAuth, md_upload], controller.uploadS3);
 
