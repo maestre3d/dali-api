@@ -17,7 +17,7 @@ async function bookAppoint (req, res) {
     // Verifies identity's role and disallow normal users to create another emplooyee's appointments
     if(req.user.role !== 'ROLE_ADMIN' && req.user.username !== employeeID) return res.status(403).send({message:"Access denegated."});
 
-    if(!employeeID || !costumer || !time || servicesID.length == 0) return res.status(400).send({message:"Required data not valid."});
+    if(!employeeID || !costumer || !time || servicesID.length == 0 ) return res.status(400).send({message:"Required data not valid."});
 
     try {
         let appoint = new Appoint();
@@ -28,6 +28,7 @@ async function bookAppoint (req, res) {
         
         appoint.time = time;
         appoint.user = employee._id;
+        appoint.status = 0;
         
 
         services.forEach(element => {
@@ -56,6 +57,17 @@ async function updateAppoint (req, res) {
         return res.status(400).send({message:"Something happened..."});
     }
 }
+
+async function getActive (req, res) {
+
+    try {
+        let found = await Appoint.findOne({$and: [{user: req.user.sub}, {status: 1}]}).populate({ path: 'user', select: 'username' }).populate({ path: 'services', select: 'name' });
+        found ? res.status(200).send({appoint: found}):res.status(404).send({message:"Not found."});
+    } catch (err) {
+        return res.status(400).send({message:"Something happened..."});
+    }
+}
+
 
 async function deleteAppoint (req, res) {
     const appointID = req.params.id;
@@ -92,11 +104,30 @@ async function getAppoint (req, res) {
     }
 }
 
+async function activateAppoint (req, res) {
+    const appointID = req.params.id;
+    const appoint = req.body;
+
+    try {
+        let validate = await Appoint.findById(appointID);
+        if(req.user.role !== 'ROLE_ADMIN' && validate.user._id === req.user.sub ) return res.status(403).send({message:"Access denegated."});
+        if(!validate) return res.status(404).send({message:"Appointment not found."});
+
+        let verify = await Appoint.findOne({$and: [{status: 1}, {user: validate.user}]});
+        if(verify) return res.status(400).send({message:"There\'s an active appointment already."});
+        
+        let updated = await Appoint.findByIdAndUpdate(appointID, appoint);
+        updated ? res.status(200).send({appoint: updated}):res.status(404).send({message:"Appointment not found."});
+    } catch (err) {
+        return res.status(400).send({message:"Something happened..."});
+    }
+}
+
 async function getUserAp (req, res) {
     const employee = req.query.user;
     try{
         let appoints = await Appoint.find({user: employee}).limit(250).populate({ path: 'services', select: 'name' })
-                            .sort({time: +1});
+                            .sort({time: -1});
         (appoints.length > 0) ? res.status(200).send({appoints: appoints}):res.status(404).send({message:"Not found."});
     } catch (err) {
         return res.status(400).send({message:"Something happened..."});
@@ -104,10 +135,9 @@ async function getUserAp (req, res) {
 }
 
 async function getPendingAp (req, res) {
-    const employeeID = req.params.user;
-    
+    const employeeID = req.params.id;
     try{
-        let active =  await Appoint.find({$and: [{username: employeeID}, {time: {$gte : new Date()}}]}).limit(25).populate({path: 'services', select: 'name'})
+        let active =  await Appoint.find({$and: [{status: 0}, {user: employeeID}, {time: {$gte : new Date()}}]}).limit(25).populate({path: 'services', select: 'name'})
         .sort({time: +1});
 
         active.length > 0 ? res.status(200).send({appoints: active}):res.status(404).send({message:"No new appointments."});
@@ -123,5 +153,7 @@ module.exports = {
     deleteAppoint,
     getAppoint,
     getUserAp,
-    getPendingAp
+    getPendingAp,
+    getActive,
+    activateAppoint
 }
