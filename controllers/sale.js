@@ -49,8 +49,6 @@ async function createSale(req, res) {
     } catch (err) {
         return res.status(400).send({message: err.message});
     }
-
-
 }
 
 function checkStock(map, items){
@@ -110,9 +108,7 @@ async function getSales(req, res) {
         let items = await Item.find({_id: IDs});
         let response = [];
         sales.forEach(sale => {
-            sale.items.forEach((value, key) => {
-                response.push({ costumer: sale.costumer, iat: sale.iat, total: sale.total, items: items });
-            });
+            response.push({ costumer: sale.costumer, iat: sale.iat, total: sale.total, items: items });
         });
         //sales.forEach(sale => { response.push({ costumer: sale.costumer, iat: sale.iat, total: sale.total, items: items }); });
         sales ? res.status(200).send({sales: response}):res.status(404).send({message:"Sales not found."});
