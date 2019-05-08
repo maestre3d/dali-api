@@ -1,5 +1,5 @@
 'use strict'
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('../services/jwt');
 const fs = require('fs');
 const path = require('path');
