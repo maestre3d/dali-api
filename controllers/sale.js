@@ -1,5 +1,6 @@
 'use strict'
 const Sale = require('../models/sale');
+const Cart = require('../models/cart');
 const Item = require('../models/item');
 
 async function createSale(req, res) {
@@ -11,30 +12,40 @@ async function createSale(req, res) {
     try {
         // Convert client's array into Map & merge IDs into an array so array searching will be enabled
         let tmp_map = new Map();
-        let tmp_items = [];
-
-        params.items.forEach(element => {
-            tmp_items.push(element._id);
-            tmp_map.set(element._id, element.quantity);
-        });
-
         // Get item's obj and check non-existing items
-        const items = await Item.find({_id: tmp_items});
-        if(items.length !== tmp_items.length) return res.status(404).send({message: "Item not found."});
+        const items = await Item.find({_id: params.items});
+        if(items.length !== params.items.length) return res.status(404).send({message: "Item not found."});
 
         // Calculate total
         let total = 0;
-        items.forEach(item => {
-            total += item.price;
-        });
+        for(let i =0; i < items.length; i++){
+            console.log(items[i].price + " * "+ params.items[i].quantity);
+            items[i].price *= params.items[i].quantity;
+            total += items[i].price;
+        }
 
         // Init sale obj
         let sale = new Sale({
             user: params.user,
+            payment: params.payment,
             costumer: params.costumer,
             iat: new Date(),
             total: total
         });
+        let cart = new Cart();
+        cart.user = sale.user;
+
+        items.forEach((item) => {
+            
+            tmp_map.forEach((value, key) => {
+                if(key === item._id){
+                    item.quantity = value;
+                }
+            });
+            
+        });
+        return res.status(200).send({sale: sale})
+        
         sale.items = tmp_map;
         
         // Check stock availability
@@ -97,21 +108,21 @@ async function getSale(req, res) {
 // POPULATE WITH QUANTITY
 async function getSales(req, res) {
     try {
+        let tmp = new Map();
+        let itemSale = new Map();
         // GraphQL response style - mutated response to sim mongo's populate
-        let sales = await Sale.find().limit(100);
-        let IDs = [];
-        sales.forEach(sale => {
-            sale.items.forEach((value, key) => {
-                IDs.push(key);
-            });
+        let sales = await Sale.find().limit(100)//.populate({path: 'items', select: 'name', model: Item });
+        sales.map((m) => {
+            tmp.set(m._id, m.items);
         });
-        let items = await Item.find({_id: IDs});
-        let response = [];
-        sales.forEach(sale => {
-            response.push({ costumer: sale.costumer, iat: sale.iat, total: sale.total, items: items });
+
+        tmp.forEach((value, key) =>  {
+            console.log(key, value);
+            //itemSale.set(key, await Item.find(value));
         });
+
         //sales.forEach(sale => { response.push({ costumer: sale.costumer, iat: sale.iat, total: sale.total, items: items }); });
-        sales ? res.status(200).send({sales: response}):res.status(404).send({message:"Sales not found."});
+        sales ? res.status(200).send({sales: sales}):res.status(404).send({message:"Sales not found."});
     } catch (error) {
         return res.status(400).send({message: error.message});
     }
