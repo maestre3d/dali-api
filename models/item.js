@@ -6,7 +6,7 @@ let ItemSchema = Schema({
     name:       String,
     brand:      String,
     type:       String,
-    stock:      Number,
+    stock:      { type: Number, default: 0 },
     price:      Number
 });
 

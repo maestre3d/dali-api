@@ -5,10 +5,13 @@ const Schema = mongoose.Schema;
 let SaleSchema = new Schema({
     user: { type: mongoose.Types.ObjectId, ref: 'User', required: true },
     costumer: String,
-    cart: { type: mongoose.Types.ObjectId, ref: 'Cart', required: true },
+    cart: [{ 
+        item: {type: mongoose.Types.ObjectId, ref: 'Item', required: true},
+        quantity: Number
+        }],
     iat: Number,
     payment: String,
-    total: Number
+    total: { type: Number, default: 0 }
 });
 
 module.exports = mongoose.model('Sale', SaleSchema);
