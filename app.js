@@ -14,6 +14,7 @@ const userRoutes = require('./routes/user');
 const itemRoutes = require('./routes/item');
 const serviceRoutes = require('./routes/service');
 const appointRoutes = require('./routes/appoint');
+const salesRoutes = require('./routes/sale');
 
 let app = express();
 
@@ -50,5 +51,6 @@ app.use(API_MD, userRoutes);
 app.use(API_MD, itemRoutes);
 app.use(API_MD, serviceRoutes);
 app.use(API_MD, appointRoutes);
+app.use(API_MD, salesRoutes);
 
 module.exports = app;

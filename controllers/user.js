@@ -1,5 +1,5 @@
 'use strict'
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('../services/jwt');
 const fs = require('fs');
 const path = require('path');
@@ -12,23 +12,31 @@ const s3 = new AWS.S3({
 const bucket = 'dali-api';
 
 const User = require('../models/user');
-const API_MSG = "Server Error";
 const saltRounds = 10;
 
 function newUser(req, res){
     let params = req.body;
 
     // Check fields
-    if( !params.password && !params.name && !params.surname && !params.username && !params.secret ) return res.status(404).send({message:"Fill all the fields."});
+    if( !params.password && !params.name && !params.surname && !params.username ) return res.status(404).send({message:"Fill all the fields."});
 
-    // Check secret key
-    if(params.secret !== 'caca123' ) return res.status(403).send({message:"Incorrect secret pass.\nAsk the admin for it."});
+    // Check user's identity role or secret key
+    if( ( req.user && req.user.role !== 'ROLE_ADMIN') || params.secret !== 'CaCa123$' ) return res.status(403).send({message:"You don't have enough permissions."});
 
-    let user = new User({
-        username: params.username,
-        name: params.name,
-        surname: params.surname
-    });
+    if(params.isAdmin) {
+        let user = new User({
+            username: params.username,
+            name: params.name,
+            surname: params.surname,
+            role: 'ROLE_ADMIN'
+        });
+    }else{
+        let user = new User({
+            username: params.username,
+            name: params.name,
+            surname: params.surname
+        });
+    }
 
     User.find({username: params.username}).exec()
         .then(x => {

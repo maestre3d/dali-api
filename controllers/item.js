@@ -5,13 +5,14 @@ async function createItem(req, res) {
     let params = req.body;
     
     if(req.user.role !== 'ROLE_ADMIN') return res.status(403).send({message:"Access denegated."});
-    if( !params.name && !params.type && !params.brand && !params.stock ) return res.status(400).send({message:"Fill all the required fields."});
+    if( !params.name && !params.type && !params.brand && !params.stock && !params.price ) return res.status(400).send({message:"Fill all the required fields."});
 
     let item = new Item({
         name: params.name,
         brand: params.brand,
         stock: params.stock,
-        type: params.type
+        type: params.type,
+        price: params.price
     });
 
     const exists = await Item.findOne({name: item.name}).exec()
