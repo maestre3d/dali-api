@@ -3,13 +3,15 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 let SaleSchema = new Schema({
-    user: { type: Schema.ObjectId, ref: 'User', required: true },
+    user: { type: mongoose.Types.ObjectId, ref: 'User', required: true },
     costumer: String,
-    items: { type: Map, of: String },
-    // cart: { type: Schema.ObjectId, ref: 'Cart', required: true },
-    // items: [{ type: Schema.ObjectId, ref: 'Item', required: true }],
+    cart: [{ 
+        item: {type: mongoose.Types.ObjectId, ref: 'Item', required: true},
+        quantity: Number
+        }],
     iat: Number,
-    total: Number
+    payment: String,
+    total: { type: Number, default: 0 }
 });
 
 module.exports = mongoose.model('Sale', SaleSchema);
