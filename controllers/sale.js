@@ -6,7 +6,7 @@ async function createSale(req, res) {
     const params = req.body;
     // Basic exception Handlers
     if( !params.user || !params.costumer || params.items.length == 0 ) return res.status(400).send({message: "Fill all fields."});
-    if( req.user.role !== 'ROLE_ADMIN' && req.user._id !== params.user ) return res.status(403).send({message: "Access denegated."});
+    if( req.user.role !== 'ROLE_ADMIN' && req.user.sub.toString() !== params.user ) return res.status(403).send({message: "Access denegated."});
 
     try {
         // Convert client's array into Map & merge IDs into an array so array searching will be enabled
