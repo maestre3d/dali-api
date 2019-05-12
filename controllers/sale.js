@@ -138,7 +138,7 @@ async function getSales(req, res) {
 async function getUserSales(req, res){
     const userID = req.params.id;
     try {
-        let sales = await Sale.find({ user: userID }).limit(100).populate({path: 'cart.item', select: 'name'});
+        let sales = await Sale.find({ user: userID }).limit(100).populate({path: 'cart.item', select: 'name'}).sort({'iat': -1});
         ( sales.length > 0 ) ? res.status(200).send({sales: sales}) : res.status(404).send({message:"Sales not found."});
 
     } catch (err) {
