@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 let SaleSchema = new Schema({
-    user: { type: mongoose.Types.ObjectId, ref: 'User', required: true },
+    user: { type: mongoose.Types.ObjectId, ref: 'User' },
     costumer: String,
     cart: [{ 
-        item: {type: mongoose.Types.ObjectId, ref: 'Item', required: true},
+        item: {type: mongoose.Types.ObjectId, ref: 'Item'},
         quantity: Number
         }],
     iat: Number,
