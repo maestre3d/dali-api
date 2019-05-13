@@ -128,7 +128,7 @@ async function getUser(req, res) {
             tmp.setTime(year_sales[i].iat);
             monthly_sales.set(year_sales[i]._id, tmp.getMonth());
         }
-        for(let i = 0; i < year_sales.length; i++){
+        for(let i = 0; i < year_appoints.length; i++){
             // Get service time
             tmp.setTime(year_appoints[i].time);
             monthly_services.set(year_appoints[i]._id, tmp.getMonth());
