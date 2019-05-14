@@ -6,7 +6,7 @@ async function createSale(req, res) {
     const params = req.body;
     // Basic exception Handlers
     if( !params.user || !params.costumer || params.items.length == 0 ) return res.status(400).send({message: "Fill all fields."});
-    if( req.user.role !== 'ROLE_ADMIN' && req.user._id !== params.user ) return res.status(403).send({message: "Access denegated."});
+    if( req.user.role !== 'ROLE_ADMIN' && req.user.sub.toString() !== params.user ) return res.status(403).send({message: "Access denegated."});
 
     try {
         // Convert client's array into Map & merge IDs into an array so array searching will be enabled
@@ -138,7 +138,7 @@ async function getSales(req, res) {
 async function getUserSales(req, res){
     const userID = req.params.id;
     try {
-        let sales = await Sale.find({ user: userID }).limit(100).populate({path: 'cart.item', select: 'name'});
+        let sales = await Sale.find({ user: userID }).limit(100).populate({path: 'cart.item', select: 'name'}).sort({'iat': -1});
         ( sales.length > 0 ) ? res.status(200).send({sales: sales}) : res.status(404).send({message:"Sales not found."});
 
     } catch (err) {
