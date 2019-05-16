@@ -12,29 +12,43 @@ const s3 = new AWS.S3({
 const bucket = 'dali-api';
 
 const User = require('../models/user');
+const Tenant = require('../models/tentant');
 const saltRounds = 10;
 
-function newUser(req, res){
+async function newUser(req, res){
     let params = req.body;
+    let secret_user;
 
     // Check fields
-    if( !params.password && !params.name && !params.surname && !params.username ) return res.status(404).send({message:"Fill all the fields."});
+    if( !params.password || !params.name || !params.surname || !params.username || !params.tenant || !params.secret ) return res.status(404).send({message:"Fill all the fields."});
 
-    // Check user's identity role or secret key
-    if( ( req.user && req.user.role !== 'ROLE_ADMIN') || params.secret !== 'CaCa123$' ) return res.status(403).send({message:"You don't have enough permissions."});
+    let tenant;
+    try {
+        // Check tenant existance and attach it
+        tenant = await Tenant.findById(params.tenant);
+        if ( !tenant ) return res.status(404).send({message: 'Tenant not found.'});
+        // Verify Dali Secret Keys
+        if ( await bcrypt.compare(params.secret, tenant.secret_user) === false && await bcrypt.compare(params.secret, tenant.secret_admin) === false ) return res.status(403).send({message:"Incorrect Dali Secret Key."});
+    } catch (error) {
+        return res.status(400).send({message: 'Not a valid tenant.'});
+    }
 
-    if(params.isAdmin) {
-        let user = new User({
+    let user;
+    if( await bcrypt.compare(params.secret, tenant.secret_user) ) {
+        user = new User({
             username: params.username,
             name: params.name,
             surname: params.surname,
-            role: 'ROLE_ADMIN'
+            tenant: params.tenant
         });
+
     }else{
-        let user = new User({
+        user = new User({
             username: params.username,
             name: params.name,
-            surname: params.surname
+            surname: params.surname,
+            tenant: params.tenant,
+            role: 'ROLE_ADMIN'
         });
     }
 
@@ -96,7 +110,7 @@ function getUsers(req, res){
 function getUser(req, res) {
     let username = req.params.username;
     
-    User.findOne({username: username}).exec()
+    User.findOne({username: username}).populate({path: 'tenant', model: 'Tenant', select: 'name'}).exec()
         .then(user => {
             if(!user) throw {code: 404, message: "User not found."};
             res.status(200).send({user: user});
@@ -105,27 +119,38 @@ function getUser(req, res) {
         .catch(err => res.status(err.code).send({message: err.message}));
 }
 
-function updateUser(req, res) {
+async function updateUser(req, res) {
     let userID = req.params.id;
     let user = req.body;
 
-    if(req.user.role !== 'ROLE_ADMIN' ) return res.status(403).send({message:"You don't have permission."});
+    if( req.user.role !== 'ROLE_ADMIN' ) return res.status(403).send({message:"You don't have permission."});
+
+    // Hash password if not null
+    if( user.password ) {
+        const hash = await bcrypt.hash(user.password, saltRounds);
+        user.password = hash;
+    }
+
+    if ( user.tenant ) {
+        const tenant = await Tenant.findById(user.tenant);
+        if ( !tenant ) return res.status(404).send({message: 'Tenant not found.'});
+    }
 
     User.findById(userID).exec()
-        .then(found => {
-            if(!found) throw {code: 404, message: "User not found."};
+    .then(found => {
+        if(!found) throw {code: 404, message: "User not found."};
 
-            // Validate admin's session
-            if(found.role === 'ROLE_ADMIN') if(found.id !== req.user.sub) throw {code: 403, message:"Cannot update user."};
+        // Validate admin's session
+        if(found.role === 'ROLE_ADMIN') if(found.id !== req.user.sub) throw {code: 403, message:"Sign in with this admin account to edit it."};
 
-            return User.findByIdAndUpdate(userID, user).exec();
-        }, err => { throw {code:400, message:"User not found."} })
-        .then(userUpd => {
-            if(!userUpd) throw {code: 404, message: "User not found."};
+        return User.findByIdAndUpdate(userID, user).exec();
+    }, err => { throw {code:400, message:"User not found."} })
+    .then(userUpd => {
+        if(!userUpd) throw {code: 404, message: "User not found."};
 
-            res.status(200).send({user:userUpd});
-        })
-        .catch(err => res.status(err.code).send({message:err.message}));
+        res.status(200).send({user:userUpd});
+    })
+    .catch(err => res.status(err.code).send({message:err.message}));
 }
 
 function deleteUser(req, res) {
@@ -136,10 +161,6 @@ function deleteUser(req, res) {
     User.findById(userID).exec()
         .then(found => {
             if(!found) throw {code: 404, message: "User not found."};
-
-            // Validate admin's session
-            if(found.role === 'ROLE_ADMIN') if(found.id !== req.user.sub) throw {code: 403, message:"Cannot update user."};
-
             return User.findByIdAndRemove(userID).exec();
         }, err => { throw {code:400, message:"User not found."} })
         .then(user => {
@@ -265,37 +286,3 @@ module.exports = {
     getImageFile,
     uploadS3
 };
-
-// ---> TESTING
-
-/*function testPromise(req, res){
-
-    let users;
-
-    User.find().exec()
-    .then(found => {
-        users = found;
-        return Item.find().exec();
-    })
-    .then(items => {
-        if(!users && !items){
-            res.status(404).send({message:"Not found."});
-        }else{
-            res.status(200).send({user: users, item: items});
-        }
-    })
-    .catch(err => res.status(500).send({message:err}));
-
-    Promise.all([
-        User.find(),
-        Item.find()
-    ])
-    .then(([users, items]) => {
-        if(!users && !items){
-            res.status(404).send({message:"Not found."});
-        }else{
-            res.status(200).send({user: users, item: items});
-        }
-    })
-    .catch(err => res.status(500).send({message:err}));
-}*/

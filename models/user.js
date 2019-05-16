@@ -8,7 +8,8 @@ let UserSchema = Schema({
     surname:        String,
     password:       String,
     image:          { type: String, default: null },
-    role:           {type: String, default: 'ROLE_USER'}
+    role:           { type: String, default: 'ROLE_USER' },
+    tenant:         { type: Schema.ObjectId, ref: 'Tenant', default: null }
 });
 
 module.exports = mongoose.model('User', UserSchema);
