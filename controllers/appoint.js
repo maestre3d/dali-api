@@ -110,8 +110,8 @@ async function activateAppoint (req, res) {
 
     try {
         let validate = await Appoint.findById(appointID);
-        if(req.user.role !== 'ROLE_ADMIN' && validate.user._id === req.user.sub ) return res.status(403).send({message:"Access denegated."});
         if(!validate) return res.status(404).send({message:"Appointment not found."});
+        if(req.user.role !== 'ROLE_ADMIN' && validate.user._id === req.user.sub ) return res.status(403).send({message:"Access denegated."});
 
         let verify = await Appoint.findOne({$and: [{status: 1}, {user: validate.user}]});
         if(verify) return res.status(400).send({message:"There\'s an active appointment already."});
@@ -136,8 +136,13 @@ async function getUserAp (req, res) {
 
 async function getPendingAp (req, res) {
     const employeeID = req.params.id;
+    let init_date = new Date();
+    let end_date = new Date();
+    init_date.setHours(0, 0, 0, 0);
+    end_date.setHours(23, 59, 59, 59);
+    console.log(`${init_date} - ${end_date}`);
     try{
-        let active =  await Appoint.find({$and: [{status: 0}, {user: employeeID}, {time: {$gte : new Date()}}]}).limit(25).populate({path: 'services', select: 'name'})
+        let active =  await Appoint.find({$and: [{status: 0}, {user: employeeID}, {$and: [ {time: {$gte : init_date.getTime()}}, {time: {$lte : end_date.getTime()}} ]}]}).limit(25).populate({path: 'services', select: 'name'})
         .sort({time: +1});
 
         active.length > 0 ? res.status(200).send({appoints: active}):res.status(404).send({message:"No new appointments."});
