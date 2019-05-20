@@ -140,7 +140,7 @@ async function getPendingAp (req, res) {
     let end_date = new Date();
     init_date.setHours(0, 0, 0, 0);
     end_date.setHours(23, 59, 59, 59);
-    console.log(`${init_date} - ${end_date}`);
+
     try{
         let active =  await Appoint.find({$and: [{status: 0}, {user: employeeID}, {$and: [ {time: {$gte : init_date.getTime()}}, {time: {$lte : end_date.getTime()}} ]}]}).limit(25).populate({path: 'services', select: 'name'})
         .sort({time: +1});
