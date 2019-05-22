@@ -58,11 +58,15 @@ async function deleteItem(req, res) {
 }
 
 async function getItems(req, res){
-    let items =  await Item.find().exec()
-                            .then( items => (items) ? items: null, err => { throw {code:400, message:"Items not found."} })
-                            .catch(err => res.status(err.code).send({message:err.message}));
+    let queries = req.query;
+    let items;
 
-    ( !items ) ? res.status(404).send({message:"Items not found."}) : res.status(200).send({items:items});
+    try {
+        items = queries.court ? await Item.find({type: 'free'}).limit(10) : await Item.find().limit(100);
+        items ? res.status(200).send({items: items}) : res.status(404).send({message: 'Items not found.'});
+    } catch (error) {
+        return res.status(400).send({message: 'Something happened...'});
+    }
 }
 
 async function getItem(req, res) {

@@ -5,7 +5,7 @@ const Item = require('../models/item');
 async function createSale(req, res) {
     const params = req.body;
     // Basic exception Handlers
-    if( !params.user || !params.costumer || params.items.length == 0 ) return res.status(400).send({message: "Fill all fields."});
+    if( !params.user || params.items.length == 0 ) return res.status(400).send({message: "Fill all fields."});
     if( req.user.role !== 'ROLE_ADMIN' && req.user.sub.toString() !== params.user ) return res.status(403).send({message: "Access denegated."});
 
     try {
@@ -33,10 +33,10 @@ async function createSale(req, res) {
         let sale = new Sale({
             user: params.user,
             payment: params.payment,
-            costumer: params.costumer,
             iat: new Date(),
             total: total
         });
+        if ( params.costumer ) { sale.costumer = params.costumer; }
 
         item_map.forEach((value, key) => {
             sale.cart.push({item: key._id, quantity: value});
@@ -138,7 +138,7 @@ async function getSales(req, res) {
 async function getUserSales(req, res){
     const userID = req.params.id;
     try {
-        let sales = await Sale.find({ user: userID }).limit(100).populate({path: 'cart.item', select: 'name'}).sort({'iat': -1});
+        let sales = await Sale.find({$and: [{ user: userID }, {costumer: {$ne: null}} ]}).limit(100).populate({path: 'cart.item', select: 'name'}).sort({'iat': -1});
         ( sales.length > 0 ) ? res.status(200).send({sales: sales}) : res.status(404).send({message:"Sales not found."});
 
     } catch (err) {

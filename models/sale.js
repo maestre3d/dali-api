@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 let SaleSchema = new Schema({
     user: { type: Schema.ObjectId, ref: 'User' },
-    costumer: String,
+    costumer: { type: String, default: null },
     cart: [{ 
         item: {type: Schema.ObjectId, ref: 'Item'},
         quantity: Number
