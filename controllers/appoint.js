@@ -12,7 +12,7 @@ async function bookAppoint (req, res) {
     const servicesID = params.service;
     const time = params.time;
     // console.log(servicesID);
-    // console.log(`Employee ID: ${employeeID}\nCostumer:${costumer}\nServices: ${services[0]}`);
+    console.log(`Employee ID: ${employeeID}\nCostumer:${costumer}`);
 
     // Verifies identity's role and disallow normal users to create another emplooyee's appointments
     if(req.user.role !== 'ROLE_ADMIN' && req.user.username !== employeeID) return res.status(403).send({message:"Access denegated."});
@@ -21,15 +21,18 @@ async function bookAppoint (req, res) {
 
     try {
         let appoint = new Appoint();
+
         let employee = await User.findOne({username: employeeID});
         if(!employee) return res.status(404).send({message:"User not found."});
+
+        let isOccuped = await Appoint.findOne({$and: [ { user: employee._id }, { time: time } ]});
+        if (isOccuped) return res.status(400).send({message: 'Date is already in use.'});
+
         let services = await Service.find({_id:servicesID});
         if(services.length <= 0) return res.status(404).send({message:"Service not found."});
         
         appoint.time = time;
         appoint.user = employee._id;
-        appoint.status = 0;
-        
 
         services.forEach(element => {
             appoint.services.push(element._id);

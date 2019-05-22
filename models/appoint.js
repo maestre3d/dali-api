@@ -7,7 +7,7 @@ const AppointSchema = new Schema({
     user: { type: Schema.ObjectId, ref:'User' },
     services: [{type: Schema.ObjectId, ref: 'Service'}],
     time: {type: Number},
-    status: Number
+    status: { type: Number, default: 0 }
 });
 
 module.exports = mongoose.model('Appoint', AppointSchema);
