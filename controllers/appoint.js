@@ -12,7 +12,6 @@ async function bookAppoint (req, res) {
     const servicesID = params.service;
     const time = params.time;
     // console.log(servicesID);
-    console.log(`Employee ID: ${employeeID}\nCostumer:${costumer}`);
 
     // Verifies identity's role and disallow normal users to create another emplooyee's appointments
     if(req.user.role !== 'ROLE_ADMIN' && req.user.username !== employeeID) return res.status(403).send({message:"Access denegated."});
@@ -33,10 +32,13 @@ async function bookAppoint (req, res) {
         
         appoint.time = time;
         appoint.user = employee._id;
+        appoint.total = 0;
 
         services.forEach(element => {
             appoint.services.push(element._id);
+            appoint.total += element.cost;
         });
+        
         appoint.services = services;
         appoint.costumer = costumer;
         let newAppoint = await appoint.save();
