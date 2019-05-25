@@ -60,12 +60,19 @@ async function deleteItem(req, res) {
 async function getItems(req, res){
     let queries = req.query;
     let items;
+    let page = 1;
+    if ( req.query.page ) { page = req.query.page; }
 
     try {
-        items = queries.court ? await Item.find({type: 'free'}).limit(10) : await Item.find().limit(100);
-        items ? res.status(200).send({items: items}) : res.status(404).send({message: 'Items not found.'});
+        if (queries.court) {
+            items = await Item.find({type: 'free'}).limit(10);
+            ( items.length > 0 ) ? res.status(200).send({items: items}) : res.status(404).send({message: 'Items not found.'});
+        } else{
+            items = await Item.paginate({}, {page: page, limit: 9});
+            ( items.docs.length > 0) ? res.status(200).send({items: items.docs}) : res.status(404).send({message: 'Items not found.'});
+        }
     } catch (error) {
-        return res.status(400).send({message: 'Something happened...'});
+        return res.status(400).send({message: error.message});
     }
 }
 

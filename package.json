@@ -23,7 +23,8 @@
     "jwt-simple": "^0.5.6",
     "moment": "^2.24.0",
     "mongoose": "^5.5.0",
-    "mongoose-pagination": "^1.0.0"
+    "mongoose-paginate": "^5.0.3",
+    "passport": "^0.4.0"
   },
   "devDependencies": {
     "morgan": "^1.9.1",

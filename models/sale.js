@@ -1,5 +1,6 @@
 'use strict'
 const mongoose = require('mongoose');
+const paginate = require('mongoose-paginate');
 const Schema = mongoose.Schema;
 
 let SaleSchema = new Schema({
@@ -13,5 +14,6 @@ let SaleSchema = new Schema({
     payment: String,
     total: { type: Number, default: 0 }
 });
+SaleSchema.plugin(paginate);
 
 module.exports = mongoose.model('Sale', SaleSchema);

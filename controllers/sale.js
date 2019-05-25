@@ -137,9 +137,14 @@ async function getSales(req, res) {
 
 async function getUserSales(req, res){
     const userID = req.params.id;
+    let page = 1;
+    if ( req.query.page ) { page = req.query.page; }
     try {
-        let sales = await Sale.find({$and: [{ user: userID }, {costumer: {$ne: null}} ]}).limit(100).populate({path: 'cart.item', select: 'name'}).sort({'iat': -1});
-        ( sales.length > 0 ) ? res.status(200).send({sales: sales}) : res.status(404).send({message:"Sales not found."});
+        // let sales = await Sale.find({$and: [{ user: userID }, {costumer: {$ne: null}} ]}).limit(100).populate({path: 'cart.item', select: 'name'}).sort({'iat': -1});
+        // ( sales.length > 0 ) ? res.status(200).send({sales: sales}) : res.status(404).send({message:"Sales not found."});
+        let sales = req.query.free === 'true' ? await Sale.paginate({$and: [{ user: userID } ]}, { populate: {path: 'cart.item', select: 'name'}, page: page, limit: 9, sort: {'iat': -1}  }) :
+        await Sale.paginate({$and: [{ user: userID }, {costumer: {$ne: null}} ]}, { populate: {path: 'cart.item', select: 'name'}, page: page, limit: 9, sort: {'iat': -1}  });
+        ( sales.docs.length > 0 ) ? res.status(200).send({sales: sales}) : res.status(404).send({message:"Sales not found."});
 
     } catch (err) {
         return res.status(400).send({message:err.message});

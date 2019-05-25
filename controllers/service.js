@@ -6,10 +6,11 @@ async function createService (req, res) {
     const params = req.body;
 
     if(req.user.role !== 'ROLE_ADMIN') return res.status(403).send({message:"Access denegated."});
-    if(!params.name) return res.status(400).send({message:"Name is required."});
+    if(!params.name || !params.cost) return res.status(400).send({message:"Name and cost are required."});
 
     const service = new Service({
-        name: params.name
+        name: params.name,
+        cost: params.cost
     });
 
     try {
