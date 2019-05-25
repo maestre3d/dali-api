@@ -16,16 +16,16 @@ if (cluster.isMaster) {
 
     // Listen for dying workers
     cluster.on('exit', function (worker) {
-
         // Replace the dead worker,
         // we're not sentimental
         console.log('Worker %d died :(', worker.id);
         cluster.fork();
     });
+    
 } else {
     mongoose.connect('mongodb://localhost:27017/dali', {useNewUrlParser: true}, (err)=>{
         if(err){
-            console.log(err);
+            console.err(err);
         }else{
             console.log('Connected to DB Server');
             app.listen(PORT, function(){

@@ -1,4 +1,5 @@
 'use strict'
+const compression = require('compression');
 const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
@@ -18,7 +19,10 @@ const salesRoutes = require('./routes/sale');
 const statsRoutes = require('./routes/stats');
 const tenRoutes = require('./routes/tenant');
 
-let app = express();
+const app = express();
+
+// Using gzip
+app.use(compression());
 
 // Body Parser config
 app.use(bodyParser.urlencoded({extended:false}));
