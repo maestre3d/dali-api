@@ -64,12 +64,16 @@ async function getItems(req, res){
     if ( req.query.page ) { page = req.query.page; }
 
     try {
-        if (queries.court) {
+        if ( queries.court && queries.court === 'true' ) {
             items = await Item.find({type: 'free'}).limit(10);
             ( items.length > 0 ) ? res.status(200).send({items: items}) : res.status(404).send({message: 'Items not found.'});
+        }
+        else if ( queries.all && queries.all === 'true' ) {
+            items = await Item.find();
+            ( items.length > 0) ? res.status(200).send({items: items}) : res.status(404).send({message: 'Items not found.'});
         } else{
-            items = await Item.paginate({}, {page: page, limit: 9});
-            ( items.docs.length > 0) ? res.status(200).send({items: items.docs}) : res.status(404).send({message: 'Items not found.'});
+            items = await Item.paginate({type: {$ne : 'free'}}, {page: page, limit: 9});
+            ( items.docs.length > 0) ? res.status(200).send({items: items}) : res.status(404).send({message: 'Items not found.'});
         }
     } catch (error) {
         return res.status(400).send({message: error.message});
