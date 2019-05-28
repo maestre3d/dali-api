@@ -14,9 +14,11 @@ async function bookAppoint (req, res) {
     // console.log(servicesID);
 
     // Verifies identity's role and disallow normal users to create another emplooyee's appointments
-    if(req.user.role !== 'ROLE_ADMIN' && req.user.username !== employeeID) return res.status(403).send({message:"Access denegated."});
+    if (req.user.role !== 'ROLE_ADMIN' && req.user.username !== employeeID) return res.status(403).send({message:"Access denegated."});
 
-    if(!employeeID || !costumer || !time || servicesID.length == 0 ) return res.status(400).send({message:"Required data not valid."});
+    if (!employeeID || !costumer || !time || servicesID.length == 0 ) return res.status(400).send({message:"Required data not valid."});
+
+    if ( new Date(time) < new Date() ) { return res.status(400).send({message: 'Invalid date, select another one.'}); }
 
     try {
         let appoint = new Appoint();
@@ -25,7 +27,7 @@ async function bookAppoint (req, res) {
         if(!employee) return res.status(404).send({message:"User not found."});
 
         let isOccuped = await Appoint.findOne({$and: [ { user: employee._id }, { time: time } ]});
-        if (isOccuped) return res.status(400).send({message: 'Date is already in use.'});
+        if (isOccuped) return res.status(400).send({message: 'Date is already in taken.'});
 
         let services = await Service.find({_id:servicesID});
         if(services.length <= 0) return res.status(404).send({message:"Service not found."});
