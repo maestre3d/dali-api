@@ -2,6 +2,7 @@ const cluster = require('cluster');
 const mongoose = require('mongoose');
 const app = require('./app');
 const PORT = process.env.PORT || 3977;
+const ENV = require('dotenv').config();
 
 mongoose.Promise = global.Promise;
 

@@ -17,7 +17,6 @@ const saltRounds = 10;
 
 async function newUser(req, res){
     let params = req.body;
-    let secret_user;
 
     // Check fields
     if( !params.password || !params.name || !params.surname || !params.username || !params.tenant || !params.secret ) return res.status(404).send({message:"Fill all the fields."});
@@ -75,14 +74,12 @@ async function newUser(req, res){
 
 function logIn(req, res){
     let params = req.body;
-    
     if(!params.username && !params.password) return res.status(404).send({message:"Fill all the fields."});
-
+    
     let user;
     User.findOne({username: params.username}).exec()
         .then(found => {
             if(!found) throw {code: 404, message: "Incorrect User/Password."}
-
             user = found;
             return bcrypt.compare(params.password, found.password);
         }, err => { throw {code : 400, message : err} })

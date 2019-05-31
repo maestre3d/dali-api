@@ -8,17 +8,22 @@ const secret = process.env.JWT_SECRET_KEY;
 exports.createToken = function (user) {
     let payload;
 
-    payload = {
-        sub: user.id,
-        username: user.username,
-        name: user.name,
-        surname: user.surname,
-        password: user.password,
-        image: user.image,
-        role: user.role,
-        iat: moment().unix(),
-        exp: moment().add(10, 'days').unix()
+    try {
+        payload = {
+            sub: user.id,
+            username: user.username,
+            name: user.name,
+            surname: user.surname,
+            password: user.password,
+            image: user.image,
+            role: user.role,
+            iat: moment().unix(),
+            exp: moment().add(10, 'days').unix()
+        }
+    
+        return jwt.encode(payload, secret);
+    } catch (error) {
+        console.log(error);
+        throw new Error(error);
     }
-
-    return jwt.encode(payload, secret);
 }
