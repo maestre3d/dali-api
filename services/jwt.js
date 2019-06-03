@@ -17,6 +17,7 @@ exports.createToken = function (user) {
             password: user.password,
             image: user.image,
             role: user.role,
+            tenant: user.tenant,
             iat: moment().unix(),
             exp: moment().add(10, 'days').unix()
         }

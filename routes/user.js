@@ -23,6 +23,7 @@ api.post('/user/aws/s3/:id', [md_auth.ensureAuth, md_upload], controller.uploadS
 api.post('/login', controller.logIn);
 api.get('/user', md_auth.ensureAuth, controller.getUsers);
 api.get('/user/:username', md_auth.ensureAuth, controller.getUser);
+api.get('/utils/user', md_auth.ensureAuth, controller.refreshIdentity);
 
 
 module.exports = api;

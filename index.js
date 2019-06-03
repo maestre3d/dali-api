@@ -26,12 +26,10 @@ if (cluster.isMaster) {
 } else {
     mongoose.connect('mongodb://localhost:27017/dali', {useNewUrlParser: true}, (err)=>{
         if(err){
-            console.err(err);
+            console.log('Server error.');
         }else{
             console.log('Connected to DB Server');
-            app.listen(PORT, function(){
-                console.log('API Listening on ' + PORT);
-            });
+            app.listen(PORT, () => console.log('API Listening on ' + PORT));
         }
     });
 }

@@ -168,6 +168,15 @@ function deleteUser(req, res) {
         
 }
 
+async function refreshIdentity(req, res) {
+    try {
+        let userFound = await User.findById(req.user.sub);
+        !req.user ? res.status(400).send({message: 'Auth required.'}) : res.status(200).send({token: jwt.createToken(userFound)});
+    } catch (error) {
+        return res.status(400).send({message: "Credentials creation critical error."});
+    }
+}
+
 function uploadFile(req, res) {
     let userID = req.params.id;
 
@@ -281,5 +290,6 @@ module.exports = {
     deleteUser,
     uploadFile,
     getImageFile,
-    uploadS3
+    uploadS3,
+    refreshIdentity
 };
