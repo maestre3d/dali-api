@@ -25,6 +25,7 @@ api.get('/user', md_auth.ensureAuth, controller.getUsers);
 api.get('/user/:username', md_auth.ensureAuth, controller.getUser);
 api.get('/utils/user', md_auth.ensureAuth, controller.refreshIdentity);
 api.put('/user/security/password/:id', md_auth.ensureAuth, controller.changePassword);
+api.post('/security/adm-auth', md_auth.ensureAuth, controller.authAdminAction);
 
 module.exports = api;
 

@@ -92,7 +92,28 @@ async function changePassword( req, res ) {
         updatedUser ? res.status(200).send({user: updatedUser}) : res.status(400).send({message: "Couldn't update password."});
 
     } catch (error) {
-        return res.status(400).send({message: 'Something happened...' + error.message});
+        return res.status(400).send({message: 'Something happened...'});
+    }
+}
+
+// Authenticate admin for a critical action
+async function authAdminAction(req, res) {
+    const params = req.body;
+    if ( !params.username || !params.password ) return res.status(400).send({message: "Fill all the fields."});
+
+    const username = params.username;
+    const password = params.password;
+
+    try {
+        const user = await User.findOne({username: username});
+        if ( !user ) return res.status(404).send({message: "User not found."});
+        if ( user.role !== 'ROLE_ADMIN' ) return res.status(403).send({message: "Invalid User."});
+
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+        isPasswordCorrect ? res.status(200).send({isCorrect: true}) : res.status(404).send({message: "Incorrect password."});
+
+    } catch (error) {
+        return res.status(400).send({message: 'Something happened...'});
     }
 }
 
@@ -316,5 +337,6 @@ module.exports = {
     getImageFile,
     uploadS3,
     refreshIdentity,
-    changePassword
+    changePassword,
+    authAdminAction
 };
