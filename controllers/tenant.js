@@ -12,22 +12,22 @@ async function Create(req, res) {
         if (find) return res.status(400).send({message: 'Company is already in use.'});
 
         // Set tenant object props
-        let tentant = new Tenant({
+        let tenant = new Tenant({
             name: params.name,
             secret_user: params.secret_user,
             secret_admin: params.secret_admin
         });
 
         // Hash data
-        let hash = await bcrypt.hash(tentant.secret_user, saltRounds);
-        tentant.secret_user = hash;
-        hash = await bcrypt.hash(tentant.secret_admin, saltRounds);
-        tentant.secret_admin = hash;
+        let hash = await bcrypt.hash(tenant.secret_user, saltRounds);
+        tenant.secret_user = hash;
+        hash = await bcrypt.hash(tenant.secret_admin, saltRounds);
+        tenant.secret_admin = hash;
 
         // Save object to BSON
-        tentant.save();
+        tenant.save();
 
-        res.status(200).send({tenant: tentant});
+        res.status(200).send({tenant: tenant});
     } catch (error) {
         return res.status(400).send({message: 'Something happened ...'});
     }
@@ -63,10 +63,10 @@ async function Delete(req, res) {
 }
 
 async function Get (req, res) {
-    const tentantID = req.params.id;
+    const tenantID = req.params.id;
     try {
-        const tentant = await Tenant.findById(tentantID);
-        tentant ? res.status(200).send({tentant: tentant}) : res.status(404).send({message: 'Tenant not found.'});
+        const tenant = await Tenant.findById(tenantID);
+        tenant ? res.status(200).send({tenant: tenant}) : res.status(404).send({message: 'Tenant not found.'});
     } catch (error) {
         return res.status(400).send({message: 'Something happened ...'});
     }
@@ -74,8 +74,8 @@ async function Get (req, res) {
 
 async function GetAll (req, res) {
     try {
-        const tentants = await Tenant.find().limit(100);
-        tentants && tentants.length > 0 ? res.status(200).send({tentants: tentants}) : res.status(404).send({message: 'Tenants not found.'});
+        const tenants = await Tenant.find().limit(100);
+        tenants && tenants.length > 0 ? res.status(200).send({tenants: tenants}) : res.status(404).send({message: 'Tenants not found.'});
     } catch (error) {
         return res.status(400).send({message: 'Something happened ...'});
     }
