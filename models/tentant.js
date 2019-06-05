@@ -6,7 +6,7 @@ const TenantSchema = new Schema({
     name: String,
     secret_user: { type: String, default: 'user' },
     secret_admin: { type: String, default: 'root' },
-    image: String
+    image: { type: String, default: null }
 });
 
 module.exports = mongoose.model('Tenant', TenantSchema);
