@@ -71,6 +71,30 @@ async function newUser(req, res){
         .catch(err => {res.status(err.code).send({message:err.message})});
 }
 
+// Default user changing pass function
+async function changePassword( req, res ) {
+    const userID = req.params.id;
+    const params = req.body;
+    if ( !params.oldPassword || !params.newPassword ) return res.status(400).send({message: 'Fill all the fields.'});
+    const oldPassword = params.oldPassword;
+    const newPassword = params.newPassword;
+    try {
+        const user = await User.findById(userID);
+        if (!user) return res.status(404).send({message: 'User not found.'});
+        if ( user._id.toString() !== userID ) return res.status(403).send({message: "You don't have permission."});
+
+        const passwordIsCorrect = await bcrypt.compare(oldPassword, user.password);
+        if (!passwordIsCorrect) return res.status(404).send({message: 'Incorrect Password.'});
+
+        const hash = await bcrypt.hash(newPassword, saltRounds);
+        const updatedUser = await User.findByIdAndUpdate(user._id, { password: hash });
+
+        updatedUser ? res.status(200).send({user: updatedUser}) : res.status(400).send({message: "Couldn't update password."});
+
+    } catch (error) {
+        return res.status(400).send({message: 'Something happened...' + error.message});
+    }
+}
 
 function logIn(req, res){
     let params = req.body;
@@ -291,5 +315,6 @@ module.exports = {
     uploadFile,
     getImageFile,
     uploadS3,
-    refreshIdentity
+    refreshIdentity,
+    changePassword
 };
