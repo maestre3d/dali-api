@@ -7,10 +7,14 @@
 */
 'use strict'
 // Libs
-const moment = require('moment');
+
 // Models
 const Sale = require('../models/sale');
 const Appoint = require('../models/appoint');
+const User = require('../models/user');
+const Service = require('../models/service');
+const Tenant = require('../models/tenant');
+const Supply = require('../models/supply');
 
 async function getHome(req, res) {
     const userID = req.user.sub;
@@ -157,7 +161,76 @@ async function getUser(req, res) {
     }
 }
 
+async function getTotalUsers(req, res) {
+    try {
+        const users = await User.find({role: 'ROLE_USER'}).countDocuments();
+        const admins = await User.find({role: 'ROLE_ADMIN'}).countDocuments();
+        users && admins ? res.status(200).send({users: users, admins: admins}) : res.status(404).send({message: 'Users not found.'});
+    } catch (error) {
+        return res.status(400).send({message: 'Something happened...'});
+    }
+}
+
+async function getTotalServices(req, res) {
+    try {
+        // TODO: Return the most used service
+        const appoints = await Appoint.find().distinct('services');
+        console.log(appoints);
+        const services = await Service.find().countDocuments();
+        services ? res.status(200).send({services: services}) : res.status(404).send({message: 'Services not found.'});
+    } catch (error) {
+        return res.status(400).send({message: 'Something happened...  ' + error.message});
+    }
+}
+
+async function getTotalSupplies(req, res) {
+    try {
+        const supplies = await Supply.find().sort({category: 1});
+        let typeSupplies = new Map();
+        let supplyArray = [];
+        let oldCategory = null;
+        supplies.forEach(supply => {
+            if ( !oldCategory || supply.category == oldCategory ) {
+                let oldValue = typeSupplies.get(supply.category);
+                oldValue ? typeSupplies.set(supply.category, oldValue + 1) : typeSupplies.set(supply.category, 1);
+            } else{
+                typeSupplies.set(supply.category, 1);
+            }
+            oldCategory = supply.category;
+        });
+        typeSupplies.forEach((value, key) => {
+            supplyArray.push({ type: key, total: value });
+        });
+
+        supplies && supplies.length > 0 ? res.status(200).send({supplies: supplyArray, total: supplies.length}) : res.status(404).send({message: 'Supplies not found.'});
+    } catch (error) {
+        return res.status(400).send({message: 'Something happened...'});
+    }
+}
+
+async function getTenantLastMod(req, res) {
+    const tenantID = req.params.id;
+    try {
+        const tenant = await Tenant.findById(tenantID).populate({path: 'lastModificationUser'});
+        tenant ? res.status(200).send({lastModificationDate: tenant.lastModificationDate, lastModificationUser: tenant.lastModificationUser}) : res.status(404).send({message: 'Tenant not found.'});
+    } catch (error) {
+        return res.status(400).send({message: 'Something happened...'});
+    }
+}
+
+async function getGeneralSales(req, res) {
+ try {
+    // TODO: Get all incomings from sales & completed appoints by month
+ } catch (error) {
+    return res.status(400).send({message: 'Something happened...'});
+ }
+}
+
 module.exports = {
     getHome,
-    getUser
+    getUser,
+    getTotalUsers,
+    getTotalServices,
+    getTotalSupplies,
+    getTenantLastMod
 }

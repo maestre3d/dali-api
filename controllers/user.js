@@ -12,7 +12,7 @@ const s3 = new AWS.S3({
 const bucket = 'dali-api';
 
 const User = require('../models/user');
-const Tenant = require('../models/tentant');
+const Tenant = require('../models/tenant');
 const saltRounds = 10;
 
 async function newUser(req, res){
@@ -73,18 +73,20 @@ async function newUser(req, res){
 
 // Default user changing pass function
 async function changePassword( req, res ) {
-    const userID = req.params.id;
     const params = req.body;
     if ( !params.oldPassword || !params.newPassword ) return res.status(400).send({message: 'Fill all the fields.'});
     const oldPassword = params.oldPassword;
     const newPassword = params.newPassword;
     try {
-        const user = await User.findById(userID);
+        const user = await User.findById(req.user.sub);
         if (!user) return res.status(404).send({message: 'User not found.'});
-        if ( user._id.toString() !== userID ) return res.status(403).send({message: "You don't have permission."});
+        if ( user._id.toString() !== req.user.sub ) return res.status(403).send({message: "You don't have permission."});
 
         const passwordIsCorrect = await bcrypt.compare(oldPassword, user.password);
         if (!passwordIsCorrect) return res.status(404).send({message: 'Incorrect Password.'});
+
+        const isEqualToNew = await bcrypt.compare(newPassword, user.password);
+        if (isEqualToNew) return res.status(404).send({message: 'Using the same password.'});
 
         const hash = await bcrypt.hash(newPassword, saltRounds);
         const updatedUser = await User.findByIdAndUpdate(user._id, { password: hash });
@@ -106,11 +108,11 @@ async function authAdminAction(req, res) {
 
     try {
         const user = await User.findOne({username: username});
-        if ( !user ) return res.status(404).send({message: "User not found."});
-        if ( user.role !== 'ROLE_ADMIN' ) return res.status(403).send({message: "Invalid User."});
+        if ( !user ) return res.status(404).send({message: "Incorrect Username / Password."});
 
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
-        isPasswordCorrect ? res.status(200).send({isCorrect: true}) : res.status(404).send({message: "Incorrect password."});
+        if ( isPasswordCorrect && user.role !== 'ROLE_ADMIN' ) return res.status(403).send({message: "Not a valid administrator."});
+        isPasswordCorrect ? res.status(200).send({token: jwt.createToken(user)}) : res.status(404).send({message: "Incorrect Username / Password."});
 
     } catch (error) {
         return res.status(400).send({message: 'Something happened...'});

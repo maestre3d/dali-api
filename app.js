@@ -18,6 +18,7 @@ const appointRoutes = require('./routes/appoint');
 const salesRoutes = require('./routes/sale');
 const statsRoutes = require('./routes/stats');
 const tenRoutes = require('./routes/tenant');
+const supplyRoutes = require('./routes/supply');
 
 const app = express();
 
@@ -60,5 +61,6 @@ app.use(API_MD, appointRoutes);
 app.use(API_MD, salesRoutes);
 app.use(API_MD, statsRoutes);
 app.use(API_MD, tenRoutes);
+app.use(API_MD, supplyRoutes);
 
 module.exports = app;
