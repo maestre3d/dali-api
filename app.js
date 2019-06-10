@@ -34,7 +34,7 @@ let logDir = path.join(__dirname, 'log');
 fs.existsSync(logDir) || fs.mkdirSync(logDir);
 let accessLogStream = rfs(
     'access.log', {
-        interval: '4d',
+        interval: '1d',
         path: logDir
     }
 );
