@@ -1,6 +1,6 @@
 {
-  "name": "antanos-api",
-  "version": "0.0.1",
+  "name": "dali-api",
+  "version": "0.9.5",
   "description": "Barbershop API\u001b[\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C API",
   "main": "index.js",
   "scripts": {
