@@ -175,7 +175,7 @@ async function getTotalServices(req, res) {
     try {
         // TODO: Return the most used service
         const appoints = await Appoint.find().distinct('services');
-        console.log(appoints);
+
         const services = await Service.find().countDocuments();
         services ? res.status(200).send({services: services}) : res.status(404).send({message: 'Services not found.'});
     } catch (error) {
@@ -218,6 +218,24 @@ async function getTenantLastMod(req, res) {
     }
 }
 
+async function getTopService(req, res) {
+    try {
+        const pipeline = [
+        {
+            "$group": {
+                "_id": "$services",
+                "count": {
+                    "$sum": 1
+                }
+            }
+        }];
+        const dates = await Appoint.aggregate(pipeline);
+        dates ? res.status(200).send({stats: dates}) : res.status(404).send({message: 'Appoints not found.'});
+    } catch (error) {
+        return res.status(400).send({message: 'Something happened... ' + error.message});
+    }
+}
+
 async function getGeneralSales(req, res) {
  try {
     // TODO: Get all incomings from sales & completed appoints by month
@@ -232,5 +250,6 @@ module.exports = {
     getTotalUsers,
     getTotalServices,
     getTotalSupplies,
-    getTenantLastMod
+    getTenantLastMod,
+    getTopService
 }
